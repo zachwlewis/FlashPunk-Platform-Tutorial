@@ -14,10 +14,11 @@ package entities
 	{
 		protected var playerImage:Image;
 		protected const PLAYER_HSPEED:int = 80;
-		protected const GRAVITY:int = 4;
+		protected var gravity:int = 4;
 		protected const JUMP:int = 150;
 		protected var a:Point;
 		protected var v:Point;
+		protected var bGravityFlipped:Boolean;
 		
 		
 		public function Player()
@@ -28,6 +29,7 @@ package entities
 			setHitbox(16,24);
 			a = new Point();
 			v = new Point();
+			bGravityFlipped = false;
 		}
 		
 		public override function update():void
@@ -38,11 +40,20 @@ package entities
 			if(Input.check(Key.RIGHT)) hInput += 1; // MOVE RIGHT
 			
 			if(Input.pressed(Key.SPACE)) jump();
+			if(Input.pressed(Key.UP)) flipGravity();
+			if(Input.pressed(Key.DOWN)) gravityToggle();
 			
 			// Update physics.
 			v.x = PLAYER_HSPEED * hInput;
 			
-			a.y = GRAVITY;
+			if(bGravityFlipped)
+			{
+				a.y = -gravity;
+			}
+			else
+			{
+				a.y = gravity;
+			}
 			v.y += a.y;
 			
 			// Apply physics.
@@ -56,16 +67,58 @@ package entities
 				y = FP.screen.height - height;
 			}
 			
+			if(y < 0)
+			{
+				v.y = 0;
+				y = 0;
+			}
+			
 			// Update parent shit.
 			super.update();
 		}
 		
 		protected function jump():void
 		{
-			if(y + height >= FP.screen.height)
+			if(isOnGround)
 			{
-				v.y = -JUMP;
+				if(bGravityFlipped)
+				{
+					v.y = JUMP;
+				}
+				else
+				{
+					v.y = -JUMP;
+				}
 			}
+		}
+		
+		protected function flipGravity():void
+		{
+			if(isOnGround)
+			{
+				bGravityFlipped = !bGravityFlipped;
+			}
+		}
+		
+		protected function gravityToggle():void
+		{
+			if(gravity <= 4)
+			{
+				gravity = 6;
+			}
+			else if(gravity == 6)
+			{
+				gravity = 8;
+			}
+			else
+			{
+				gravity = 4;
+			}
+		}
+		
+		public function get isOnGround():Boolean
+		{
+			return (y + height >= FP.screen.height && !bGravityFlipped) || (y <= 0 && bGravityFlipped);
 		}
 	}
 }
